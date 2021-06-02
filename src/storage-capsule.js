@@ -3,7 +3,7 @@ import groupBy from 'group-by';
 import type { IConfig } from './interfaces/config';
 import type { IStorage } from './interfaces/storage';
 import type { ITask } from './interfaces/task';
-import { LocalStorageAdapter, InMemoryAdapter } from './adapters';
+import { LocalStorageAdapter, InMemoryAdapter, IndexedDBAdapter } from './adapters';
 import { excludeSpecificTasks, lifo, fifo } from './utils';
 
 /* eslint no-console: ["error", { allow: ["warn", "error"] }] */
@@ -30,6 +30,8 @@ export default class StorageCapsule {
       return new Storage(this.config);
     } else if (this.config.get('storage') === 'localstorage') {
       return new LocalStorageAdapter(this.config);
+    } else if (this.config.get('storage') === 'indexeddb') {
+      return new IndexedDBAdapter(this.config);
     }
     return new InMemoryAdapter(this.config);
   }
