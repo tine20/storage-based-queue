@@ -17,9 +17,12 @@ export default class StorageCapsule {
 
   storageChannel: string;
 
+  storageJobFifo: any[];
+
   constructor(config: IConfig, storage: IStorage) {
     this.config = config;
     this.storage = this.initialize(storage);
+    this.storageJobFifo = [];
   }
 
   initialize(Storage: any): IStorage {
@@ -31,7 +34,58 @@ export default class StorageCapsule {
     } else if (this.config.get('storage') === 'localstorage') {
       return new LocalStorageAdapter(this.config);
     }
+
     return new InMemoryAdapter(this.config);
+  }
+
+  /**
+   * make sure storage actions are executed (and finished) in the order they are called
+   *
+   * @return {any[]}
+   *
+   * @api public
+   */
+  storageQueue(): IStorage<any[]> {
+    return new Promise((resolve) => {
+      this.storageJobFifo.push(resolve);
+
+      if (this.storageJobFifo.length === 1) {
+        this.nextJob();
+      }
+    });
+  }
+
+  /**
+   * execute next job in storage job buffer
+   *
+   * @return {any[]}
+   */
+  nextJob() {
+    const resolve = this.storageJobFifo[0];
+
+    if (resolve) {
+      resolve({
+        async get(key: string) { return wrap('get'); },
+        async set(key: string, value: any[]) {return wrap('set', arguments); },
+        async has(key: string) {return wrap('has', arguments); },
+        async clear() { return wrap('clear'); },
+      });
+    }
+
+    const wrap = async (fn, args) => {
+      try {
+        const result = await this.storage[fn].apply(this.storage, args);
+        this.storageJobFifo.splice(0, 1);
+
+        if (this.storageJobFifo.length > 0) {
+          setTimeout(this.nextJob(), 1);
+        }
+
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    };
   }
 
   /**
@@ -104,19 +158,21 @@ export default class StorageCapsule {
    *   The value. This annotation can be used for type hinting purposes.
    */
   async update(id: string, update: { [property: string]: any }): Promise<boolean> {
-    const data: any[] = await this.all();
-    const index: number = data.findIndex((t) => t._id === id);
+    return await this.storageQueue().then(async (storage) => {
+      const data: any[] = await this.all();
+      const index: number = data.findIndex((t) => t._id === id);
 
-    // if index not found, return false
-    if (index < 0) return false;
+      // if index not found, return false
+      if (index < 0) return false;
+  
+      // merge existing object with given update object
+      data[index] = { ...data[index], ...update };
 
-    // merge existing object with given update object
-    data[index] = { ...data[index], ...update };
+      await storage.set(this.storageChannel, data);
 
-    // save to the storage as string
-    await this.storage.set(this.storageChannel, data);
-
-    return true;
+      return true;
+      
+    });
   }
 
   /**
