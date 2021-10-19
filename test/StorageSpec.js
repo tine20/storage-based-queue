@@ -25,6 +25,7 @@ describe('Storage capsule class tests', () => {
     await storageCapsule.clear('channel-d');
     await storageCapsule.clear('channel-e');
     await storageCapsule.clear('channel-f');
+    await storageCapsule.clear('channel-j');
   });
 
   afterEach(() => {
@@ -205,5 +206,44 @@ describe('Storage capsule class tests', () => {
 
     config.set('storage', 'inmemory');
     expect(storageCapsule.initialize() instanceof InMemoryAdapter).toBeTruthy();
+  });
+
+  it('should be update multi tasks in storage, -> update()', async () => {
+    storageCapsule.channel('channel-j');
+    const tasks = [];
+    const newTask1 = Object.assign({}, exmpTask, { tag: 'test-1' });
+    const t1 = await storageCapsule.save(newTask1);
+    tasks.push(t1);
+
+    const newTask2 = Object.assign({}, exmpTask, { tag: 'test-2' });
+    const t2 = await storageCapsule.save(newTask2);
+    tasks.push(t2);
+
+    const newTask3 = Object.assign({}, exmpTask, { tag: 'test-3' });
+    const t3 = await storageCapsule.save(newTask3);
+    tasks.push(t3);
+
+    const promises = [];
+
+    tasks.forEach(async (task) => {
+      const result = new Promise(async (resolve) => {
+        await storageCapsule.update(task, { tag: 'test4' }).then(() => {
+          resolve();
+        })
+      })
+      promises.push(result);
+    });
+    
+    await Promise.all(promises).then(async () => {
+      console.log('start assertion!!');
+      const tasks = await storageCapsule.storage.get('channel-j');
+      const updatedTask1 = tasks.shift();
+      expect(updatedTask1.tag).toEqual('test4');
+      const updatedTask2 = tasks.shift();
+      expect(updatedTask2.tag).toEqual('test4');
+      const updatedTask3 = tasks.shift();
+      expect(updatedTask3.tag).toEqual('test4');
+    });
+
   });
 });
