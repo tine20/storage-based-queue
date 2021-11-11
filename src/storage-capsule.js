@@ -279,6 +279,7 @@ export default class StorageCapsule {
    * @api public
    */
   async clear(channel: string): Promise<void> {
+    this.storageJobFifo = [];
     await this.storage.clear(channel);
   }
 }
