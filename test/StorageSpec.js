@@ -26,6 +26,7 @@ describe('Storage capsule class tests', () => {
     await storageCapsule.clear('channel-e');
     await storageCapsule.clear('channel-f');
     await storageCapsule.clear('channel-j');
+    await storageCapsule.clear('channel-k');
   });
 
   afterEach(() => {
@@ -243,6 +244,40 @@ describe('Storage capsule class tests', () => {
       expect(updatedTask2.tag).toEqual('test4');
       const updatedTask3 = tasks.shift();
       expect(updatedTask3.tag).toEqual('test4');
+    });
+
+  });
+
+  it('should be delete multi tasks in storage, -> delete()', async () => {
+    storageCapsule.channel('channel-k');
+    const tasks = [];
+    const newTask1 = Object.assign({}, exmpTask, { tag: 'test-1' });
+    const t1 = await storageCapsule.save(newTask1);
+    tasks.push(t1);
+
+    const newTask2 = Object.assign({}, exmpTask, { tag: 'test-2' });
+    const t2 = await storageCapsule.save(newTask2);
+    tasks.push(t2);
+
+    const newTask3 = Object.assign({}, exmpTask, { tag: 'test-3' });
+    const t3 = await storageCapsule.save(newTask3);
+    tasks.push(t3);
+
+    const promises = [];
+
+    tasks.forEach(async (task) => {
+      const result = new Promise(async (resolve) => {
+        await storageCapsule.delete(task).then(() => {
+          resolve();
+        })
+      })
+      promises.push(result);
+    });
+    
+    await Promise.all(promises).then(async () => {
+      console.log('start assertion!!');
+      const tasks = await storageCapsule.storage.get('channel-k');
+      expect(tasks.length).toEqual(0);
     });
 
   });
