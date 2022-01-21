@@ -179,21 +179,23 @@ export default class StorageCapsule {
    * Remove task from storage
    *
    * @param  {String} id
-   * @return {Boolean}
+   * @return {string}
    *
    * @api public
    */
   async delete(id: string): Promise<boolean> {
-    const data: any[] = await this.all();
-    const index: number = data.findIndex((d) => d._id === id);
+    return await this.storageQueue().then(async (storage) => {
+      const data: any[] = await this.all();
+      const index: number = data.findIndex((d) => d._id === id);
 
-    if (index < 0) return false;
+      if (index < 0) return false;
 
-    delete data[index];
+      delete data[index];
 
-    await this.storage.set(this.storageChannel, data.filter((d) => d));
+      await storage.set(this.storageChannel, data.filter((d) => d));
 
-    return true;
+      return true;
+    });
   }
 
   /**
