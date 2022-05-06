@@ -1,7 +1,7 @@
 import Config from '../src/config';
 import Queue from '../src/queue';
 import StorageCapsule from './../src/storage-capsule';
-import { InMemoryAdapter, LocalStorageAdapter } from './../src/adapters';
+import { InMemoryAdapter, LocalStorageAdapter, LocalForageAdapter } from './../src/adapters';
 import SendEmail from './ExampleWorker';
 import Channel from '../src/channel';
 
@@ -119,5 +119,8 @@ describe('Queue class tests', () => {
     Queue.use({ storage: LocalStorageAdapter });
     const channelB = newQueue.create('channel-driver-2');
     expect(channelB.storage.storage instanceof LocalStorageAdapter).toBeTruthy();
+    Queue.use({ storage: LocalForageAdapter });
+    const channelC = newQueue.create('channel-driver-3');
+    expect(channelC.storage.storage instanceof LocalForageAdapter).toBeTruthy();
   });
 });

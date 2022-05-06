@@ -2,7 +2,7 @@ import Config from '../src/config';
 import Queue from '../src/queue';
 import Channel from '../src/channel';
 import StorageCapsule from './../src/storage-capsule';
-import { InMemoryAdapter, LocalForageAdapter } from './../src/adapters';
+import { InMemoryAdapter } from './../src/adapters';
 import SendEmail from './ExampleWorker';
 
 describe('Channel class tests', () => {

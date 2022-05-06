@@ -78,6 +78,7 @@ gulp.task('stripTypes', async () => {
     'adapters/index.js',
     'adapters/localstorage.js',
     'adapters/inmemory.js',
+    'adapters/localforage.js',
     'enum/log.events.js',
     'enum/config.data.js',
     'channel.js',

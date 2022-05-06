@@ -10,6 +10,7 @@
     "braces": "^3.0.2",
     "flow": "^0.2.3",
     "group-by": "0.0.1",
+    "localforage": "^1.10.0",
     "object-path": "^0.11.5",
     "pseudo-worker": "^1.3.0",
     "tunnel-agent": "^0.6.0"
