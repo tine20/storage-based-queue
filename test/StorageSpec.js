@@ -205,8 +205,12 @@ describe('Storage capsule class tests', () => {
     const lfStorage = new LocalStorageAdapter(config);
     expect(storageCapsule.initialize(lfStorage) instanceof LocalStorageAdapter).toBeTruthy();
 
+    const lforage = new LocalForageAdapter(config);
+    expect(storageCapsule.initialize(lforage) instanceof LocalForageAdapter).toBeTruthy();
+  
     config.set('storage', 'inmemory');
     expect(storageCapsule.initialize() instanceof InMemoryAdapter).toBeTruthy();
+
   });
 
   it('should be update multi tasks in storage, -> update()', async () => {
