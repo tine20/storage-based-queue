@@ -15,6 +15,16 @@ export function taskAddedLog([task]: any[]) {
   );
 }
 
+export function tasksAddedLog([tasks]) {
+  log(
+      `%c${String.fromCharCode(43)} (${tasks.length}) -> ${obj.get(
+          logEvents,
+          'queue.batchCreated'
+      )}`,
+      'color: green;font-weight: bold;'
+  );
+}
+
 export function queueStartLog([type]: any[]) {
   log(
     `%c${String.fromCharCode(8211)} (${type}) -> ${obj.get(logEvents, 'queue.starting')}`,
