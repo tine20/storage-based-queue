@@ -10,6 +10,7 @@ import {
   db,
   canMultiple,
   saveTask,
+  saveTasks,
   logProxy,
   createTimeout,
   stopQueue,
@@ -17,6 +18,7 @@ import {
 } from './helpers';
 import {
   taskAddedLog,
+  tasksAddedLog,
   nextTaskLog,
   queueStoppingLog,
   queueStartLog,
@@ -84,6 +86,38 @@ export default class Channel {
     logProxy.call(this, taskAddedLog, task);
 
     return id;
+  }
+
+    /**
+   * Create new jobs to channel
+   *
+   * @param  {Object} task
+   * @return {String|Boolean} job
+   *
+   * @api public
+   */
+  async addBatch(tasks) {
+    const tasksToAdd = [];
+    const promises = _.map(tasks, (task) => {
+      return new Promise(async (resolve) => {
+        const canMulti = await canMultiple.call(this, task);
+        if (canMulti) {
+          tasksToAdd.push(task);
+        }
+        resolve();
+      });
+    });
+    await Promise.all(promises);
+    const ids = await saveTasks.call(this, tasksToAdd);
+    
+    if (ids && this.running === true) {
+      await this.start();
+    }
+    
+    // pass activity to the log service.
+    logProxy.call(this, tasksAddedLog, tasks);
+    
+    return ids;
   }
 
   /**

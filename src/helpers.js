@@ -94,6 +94,23 @@ export async function saveTask(task: ITask): Promise<string | boolean> {
 }
 
 /**
+ * New tasks save helper
+ * Context: Channel
+ *
+ * @param {Array} tasks
+ * @return {string|boolean}
+ *
+ * @api private
+ */
+export async function saveTasks(tasks) {
+  tasks = _.map(tasks, (task) => {
+    return checkPriority(task);
+  })
+  const result = await db.call(this).save(tasks);
+  return result;
+}
+
+/**
  * Task remove helper
  * Context: Channel
  *

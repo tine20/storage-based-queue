@@ -119,38 +119,55 @@ export default class StorageCapsule {
       .reduce(this.reduceTasks(tasks), []);
   }
 
-  /**
-   * Save task to storage
+   /**
+   * Save tasks to storage
    *
    * @param  {ITask} task
    * @return {String|Boolean}
    *
    * @api public
    */
-  async save(task: ITask): Promise<string | boolean> {
-    if (typeof task !== 'object') return false;
-
+  async save(newTasks) {
+    if (!Array.isArray(newTasks)) {
+      newTasks = [newTasks];
+    }
+    let result = true;
+    _.each(newTasks, (task) => {
+      if (typeof task !== 'object') {
+        result = false;
+      }
+    });
+    
+    if (!result) {
+      return false;
+    }
+    
     // get all tasks current channel's
-    const tasks: ITask[] = await this.storage.get(this.storageChannel);
+    const tasks = await this.storage.get(this.storageChannel);
 
     // Check the channel limit.
     // If limit is exceeded, does not insert new task
     if (await this.isExceeded()) {
-      console.warn(`Task limit exceeded: The '${this.storageChannel}' channel limit is ${this.config.get('limit')}`);
+      console.warn(
+        `Task limit exceeded: The '${
+          this.storageChannel
+        }' channel limit is ${this.config.get('limit')}`
+      );
       return false;
     }
 
     // prepare all properties before save
     // example: createdAt etc.
-    const newTask = this.prepareTask(task);
-
-    // add task to storage
-    tasks.push(newTask);
+    _.each(newTasks, (task) => {
+      const newTask = this.prepareTask(task);
+      // add task to storage
+      tasks.push(newTask);
+    })
 
     // save tasks
     await this.storage.set(this.storageChannel, tasks);
 
-    return newTask._id;
+    return newTasks.map(function(task){ return task._id; });
   }
 
   /**
@@ -175,6 +192,31 @@ export default class StorageCapsule {
       return true;
       
     });
+  }
+
+  /**
+   * Update channel store with batch tasks.
+   *
+   * @return {string}
+   *   The value. This annotation can be used for type hinting purposes.
+   */
+  async updateBatch(tasks) {
+    const result = await this.storageQueue().then(async (storage) => {
+      const data = await this.all();
+      _.each(tasks, (task) =>{
+        const index = data.findIndex((t) => t._id === task._id);
+        // if index not found, return false
+        if (index > -1) {
+          // merge existing object with given update object
+          data[index] = { ...data[index], ...task };
+        }
+      })
+
+      await storage.set(this.storageChannel, data);
+      return true;
+    });
+    
+    return result;
   }
 
   /**
