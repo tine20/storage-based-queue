@@ -243,6 +243,32 @@ export default class StorageCapsule {
   }
 
   /**
+   * Remove tasks from storage
+   *
+   * @param  {String} id
+   * @return {string}
+   *
+   * @api public
+   */
+  async deleteBatch(tasks) {
+    const result = await this.storageQueue().then(async (storage) => {
+      const data: any[] = await this.all();
+      const taskIds = _.map(tasks, '_id');
+  
+      data = _.filter(data, (task) =>{
+        const index = taskIds.findIndex((id) => id === task._id);
+        return index === -1;
+      })
+  
+      await storage.set(
+          this.storageChannel,
+          data
+      );
+    
+    return result;
+  }
+
+  /**
    * Get all tasks
    *
    * @return {Any[]}
