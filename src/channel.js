@@ -251,11 +251,9 @@ export default class Channel {
   async clearByTag(tag: string): Promise<void> {
     const self = this;
     const data = await db.call(self).all();
-    const removes = data.filter(utilClearByTag.bind(tag)).map(async (t) => {
-      const result = await db.call(self).delete(t._id);
-      return result;
-    });
-    await Promise.all(removes);
+    const tasks = data.filter(utilClearByTag.bind(tag));
+    await db.call(self).deleteBatch(tasks);
+    return true;
   }
 
   /**
